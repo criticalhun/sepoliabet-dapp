@@ -1,14 +1,13 @@
 import { motion } from 'framer-motion';
-import { cn } from '../lib/utils';
 
-export default function GlassCard({ children, className, delay = 0 }) {
+export default function GlassCard({ children, className = '', delay = 0, hover = true }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay }}
-      whileHover={{ y: -5, boxShadow: '0 20px 40px rgba(99,102,241,0.2)' }}
-      className={cn("glass-card p-6", className)}
+      transition={{ duration: 0.3, delay }}
+      whileHover={hover ? { y: -2, borderColor: 'rgba(255,255,255,0.14)' } : {}}
+      className={`card-elevated p-5 transition-colors duration-200 ${className}`}
     >
       {children}
     </motion.div>

@@ -2,142 +2,247 @@ import { useState, useEffect } from 'react';
 import { useMarkets } from '../hooks/useMarket';
 import { Link } from 'react-router-dom';
 import { useAccount } from 'wagmi';
-import { getUserBet } from '../services/contractService';
-import GlassCard from '../components/GlassCard';
+import { ethers } from 'ethers';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CONTRACT_ADDRESS } from '../contracts/contractAddress';
+import BettingMarketABI from '../contracts/BettingMarket.json';
 import Spinner from '../components/Spinner';
-import GradientButton from '../components/GradientButton';
+import StatsPanel from '../components/StatsPanel';
+
+const CRYPTO_META = {
+  BTC: { color: '#f7931a', icon: '₿' },
+  ETH: { color: '#627eea', icon: 'Ξ' },
+  SOL: { color: '#9945ff', icon: '◎' },
+  BNB: { color: '#f3ba2f', icon: 'B' },
+};
+
+function detectCrypto(q = '') {
+  for (const k of Object.keys(CRYPTO_META)) if (q.startsWith(k)) return k;
+  return null;
+}
+
+function TimeLeft({ endTime }) {
+  const [left, setLeft] = useState('');
+  useEffect(() => {
+    const update = () => {
+      const s = endTime - Math.floor(Date.now() / 1000);
+      if (s <= 0) { setLeft('Lejárt'); return; }
+      if (s < 3600) setLeft(`${Math.floor(s/60)}p ${s%60}s`);
+      else setLeft(`${Math.floor(s/3600)}ó ${Math.floor((s%3600)/60)}p`);
+    };
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [endTime]);
+  return <span className="mono text-xs">{left}</span>;
+}
+
+function MarketCard({ market, index }) {
+  const crypto = detectCrypto(market.question);
+  const meta = crypto ? CRYPTO_META[crypto] : null;
+  const total = parseFloat(market.totalYesAmount) + parseFloat(market.totalNoAmount);
+  const yesP = total > 0 ? (parseFloat(market.totalYesAmount) / total * 100) : 50;
+  const priceMatch = market.question.match(/([\d,]+\.?\d{0,2}) USD/);
+  const price = priceMatch ? priceMatch[1] : null;
+  const isResolved = market.resolved;
+  const isEnded = Date.now() / 1000 > market.endTime;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, delay: index * 0.035 }}
+      whileHover={{ y: -3 }}
+      className="card transition-all duration-200 overflow-hidden group"
+      style={{
+        borderLeft: `3px solid ${meta?.color || '#334155'}`,
+        cursor: 'pointer',
+      }}
+    >
+      <Link to={`/market/${market.id}`} className="block p-4">
+
+        {/* Fejléc */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2">
+            {meta && (
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold shrink-0"
+                style={{ background: meta.color + '20', color: meta.color }}>
+                {meta.icon}
+              </div>
+            )}
+            <div>
+              <p className="label">{crypto || 'Egyéb'} piac #{market.id}</p>
+              {price && (
+                <p className="text-white font-semibold text-sm mono">
+                  ${price}
+                </p>
+              )}
+              {!price && (
+                <p className="text-slate-300 text-sm leading-snug line-clamp-2">
+                  {market.question}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {isResolved ? (
+            <span className={market.winningOutcome ? 'tag-up' : 'tag-down'}>
+              {market.winningOutcome ? '↑ FEL' : '↓ LE'}
+            </span>
+          ) : isEnded ? (
+            <span className="text-xs text-yellow-500 bg-yellow-900/20 px-2 py-0.5 rounded">
+              Lejárt
+            </span>
+          ) : (
+            <span className="text-xs text-slate-500">
+              <TimeLeft endTime={market.endTime} />
+            </span>
+          )}
+        </div>
+
+        {/* Pool + sáv */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-xs text-slate-500">
+            <span>Pool: <span className="text-slate-300 mono">{total.toFixed(4)} ETH</span></span>
+            <span className="flex gap-3">
+              <span style={{ color: '#4ade80' }}>↑ {yesP.toFixed(0)}%</span>
+              <span style={{ color: '#f87171' }}>↓ {(100 - yesP).toFixed(0)}%</span>
+            </span>
+          </div>
+
+          <div className="h-1 rounded-full overflow-hidden" style={{ background: '#1e293b' }}>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${yesP}%` }}
+              transition={{ duration: 0.6, delay: index * 0.035 + 0.2 }}
+              className="h-full rounded-full"
+              style={{
+                background: isResolved
+                  ? (market.winningOutcome ? '#22c55e' : '#ef4444')
+                  : `linear-gradient(90deg, #22c55e, ${meta?.color || '#6366f1'})`,
+              }}
+            />
+          </div>
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
+
+const CRYPTOS = ['Mind', 'BTC', 'ETH', 'SOL', 'BNB'];
+const TABS = [
+  { key: 'active', label: 'Aktív' },
+  { key: 'results', label: 'Eredmények' },
+  { key: 'mine', label: 'Saját' },
+];
 
 export default function Home() {
   const { markets, loading } = useMarkets();
   const { address } = useAccount();
-  const [showResolved, setShowResolved] = useState(false);
-  const [showMyBets, setShowMyBets] = useState(false);
+  const [crypto, setCrypto] = useState('Mind');
+  const [tab, setTab] = useState('active');
   const [myMarkets, setMyMarkets] = useState([]);
 
-  // Ha a felhasználó be van jelentkezve, szűrjük a piacokat a saját fogadásai alapján
   useEffect(() => {
-    if (!address || markets.length === 0) {
-      setMyMarkets([]);
-      return;
-    }
-    const checkMyBets = async () => {
-      const results = [];
-      for (const market of markets) {
-        try {
-          const yesBet = await getUserBet(market.id, address, true);
-          const noBet = await getUserBet(market.id, address, false);
-          if (parseFloat(yesBet) > 0 || parseFloat(noBet) > 0) {
-            results.push(market);
-          }
-        } catch (e) {
-          console.error(e);
-        }
+    if (!address || !markets.length) { setMyMarkets([]); return; }
+    const check = async () => {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, BettingMarketABI, provider);
+      const res = [];
+      for (const m of markets) {
+        const [y, n] = await Promise.all([
+          contract.getUserBet(m.id, address, true),
+          contract.getUserBet(m.id, address, false),
+        ]);
+        if (y > 0n || n > 0n) res.push(m);
       }
-      setMyMarkets(results);
+      setMyMarkets(res);
     };
-    checkMyBets();
+    check();
   }, [markets, address]);
 
-  const activeMarkets = markets.filter(m => !m.resolved);
-  const resolvedMarkets = markets.filter(m => m.resolved);
+  const byCrypto = (list) => crypto === 'Mind' ? list
+    : list.filter(m => detectCrypto(m.question) === crypto);
 
-  // Kiválasztott lista a fül alapján
-  let displayedMarkets;
-  if (showMyBets) displayedMarkets = myMarkets;
-  else if (showResolved) displayedMarkets = resolvedMarkets;
-  else displayedMarkets = activeMarkets;
-
-  const renderMarketCard = (market) => {
-    const totalPool = parseFloat(market.totalYesAmount) + parseFloat(market.totalNoAmount);
-    const yesPercent = totalPool > 0 ? (parseFloat(market.totalYesAmount) / totalPool * 100).toFixed(0) : 50;
-    const noPercent = totalPool > 0 ? (parseFloat(market.totalNoAmount) / totalPool * 100).toFixed(0) : 50;
-    const endDate = new Date(market.endTime * 1000);
-    const isResolved = market.resolved;
-    const winningOutcome = market.winningOutcome;
-    const winningPool = isResolved ? (winningOutcome ? market.totalYesAmount : market.totalNoAmount) : null;
-
-    return (
-      <GlassCard key={market.id} className="h-full flex flex-col">
-        <Link to={`/market/${market.id}`} className="flex flex-col h-full">
-          <h3 className="font-semibold text-lg mb-2 flex-grow">{market.question}</h3>
-          <div className="flex justify-between text-sm text-gray-400 mb-3">
-            <span>{totalPool.toFixed(4)} ETH</span>
-            <span>{endDate.toLocaleDateString()}</span>
-          </div>
-          {!isResolved ? (
-            <div className="flex gap-2 text-sm">
-              <span className="bg-green-900 text-green-300 px-2 py-1 rounded">IGEN {yesPercent}%</span>
-              <span className="bg-red-900 text-red-300 px-2 py-1 rounded">NEM {noPercent}%</span>
-            </div>
-          ) : (
-            <div className="text-sm space-y-1">
-              <div className={`px-2 py-1 rounded font-bold ${winningOutcome ? 'bg-green-800 text-green-200' : 'bg-red-800 text-red-200'}`}>
-                Eredmény: {winningOutcome ? 'IGEN' : 'NEM'}
-              </div>
-              <div className="text-gray-300 text-xs">
-                Nyereményalap: {winningPool} ETH
-              </div>
-            </div>
-          )}
-        </Link>
-      </GlassCard>
-    );
+  const lists = {
+    active: byCrypto(markets.filter(m => !m.resolved)),
+    results: byCrypto(markets.filter(m => m.resolved)),
+    mine: byCrypto(myMarkets),
   };
+  const display = lists[tab] || [];
 
   return (
-    <div>
-      <h1 className="text-3xl md:text-4xl font-bold mb-2 gradient-text">
-        {showMyBets ? 'Saját fogadásaim' : showResolved ? 'Korábbi eredmények' : 'Aktív piacok'}
-      </h1>
-      <p className="text-gray-400 text-sm md:text-base mb-6">
-        {showMyBets
-          ? 'Piacok, ahol te is fogadtál.'
-          : showResolved
-          ? 'A múltbeli fogadások eredményei és nyereményei.'
-          : 'Fedezd fel a fogadási lehetőségeket, és használd a tudásod.'}
-      </p>
+    <div className="container mx-auto px-4 py-6 max-w-6xl">
 
-      {/* Váltó gombok */}
-      <div className="flex flex-wrap gap-2 md:gap-3 mb-8">
-        <GradientButton
-          onClick={() => { setShowResolved(false); setShowMyBets(false); }}
-          className={`px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition ${
-            !showResolved && !showMyBets ? '' : 'from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600'
-          }`}
-        >
-          Aktív ({activeMarkets.length})
-        </GradientButton>
-        <GradientButton
-          onClick={() => { setShowResolved(true); setShowMyBets(false); }}
-          className={`px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition ${
-            showResolved && !showMyBets ? '' : 'from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600'
-          }`}
-        >
-          Eredmények ({resolvedMarkets.length})
-        </GradientButton>
-        {address && (
-          <GradientButton
-            onClick={() => { setShowMyBets(true); setShowResolved(false); }}
-            className={`px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition ${
-              showMyBets ? '' : 'from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600'
-            }`}
-          >
-            Saját fogadásaim ({myMarkets.length})
-          </GradientButton>
-        )}
+      {/* Hero */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-white mb-1">
+          Kripto előrejelzési piacok
+        </h1>
+        <p className="text-sm text-slate-500">
+          Valós idejű BTC · ETH · SOL · BNB árfolyam piacok Sepolia testneten
+        </p>
       </div>
 
-      {loading ? (
-        <Spinner />
-      ) : displayedMarkets.length === 0 ? (
-        <p className="text-gray-400 text-center py-10">
-          {showMyBets ? 'Még nincs egyetlen fogadásod sem.' :
-           showResolved ? 'Még nincs lezárt piac.' : 'Még nincs aktív piac.'}
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {displayedMarkets.map(renderMarketCard)}
+      <StatsPanel />
+
+      {/* Kripto + Tab filter */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        {/* Kripto filter */}
+        <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.06)' }}>
+          {CRYPTOS.map(c => {
+            const meta = CRYPTO_META[c];
+            const active = crypto === c;
+            return (
+              <button key={c} onClick={() => setCrypto(c)}
+                className="px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150"
+                style={{
+                  background: active ? (meta?.color + '22' || 'rgba(99,102,241,0.15)') : 'transparent',
+                  color: active ? (meta?.color || '#a5b4fc') : '#475569',
+                  border: active ? `1px solid ${meta?.color || '#6366f1'}44` : '1px solid transparent',
+                }}
+              >
+                {c}
+              </button>
+            );
+          })}
         </div>
+
+        {/* Tab filter */}
+        <div className="flex items-center gap-1">
+          {TABS.filter(t => t.key !== 'mine' || address).map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className="px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150"
+              style={{
+                background: tab === t.key ? 'rgba(255,255,255,0.07)' : 'transparent',
+                color: tab === t.key ? '#e2e8f0' : '#475569',
+                border: '1px solid transparent',
+              }}
+            >
+              {t.label}
+              <span className="ml-1.5 text-slate-600">
+                {lists[t.key]?.length ?? 0}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Lista */}
+      {loading ? <Spinner /> : display.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-slate-600">
+          <div className="text-4xl mb-3">◎</div>
+          <p className="text-sm">Nincs megjeleníthető piac</p>
+        </div>
+      ) : (
+        <AnimatePresence mode="wait">
+          <div key={tab + crypto}
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {display.map((m, i) => (
+              <MarketCard key={m.id} market={m} index={i} />
+            ))}
+          </div>
+        </AnimatePresence>
       )}
     </div>
   );

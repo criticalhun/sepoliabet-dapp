@@ -1,15 +1,34 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useMarket } from '../hooks/useMarket';
 import { usePlaceBet, useClaim, useResolveMarket } from '../hooks/useBetting';
 import { useAccount } from 'wagmi';
+import { motion } from 'framer-motion';
 import { getOwner, getUserBets } from '../services/contractService';
-import GlassCard from '../components/GlassCard';
-import GradientButton from '../components/GradientButton';
+import CryptoChart from '../components/CryptoChart';
 import Spinner from '../components/Spinner';
-import BTCChart from '../components/BTCChart';
 
-const isBTCMarket = (q) => q && (q.startsWith('BTC') || q.includes('árfolyam'));
+const CRYPTO_META = {
+  BTC: { color: '#f7931a', label: 'Bitcoin', icon: '₿' },
+  ETH: { color: '#627eea', label: 'Ethereum', icon: 'Ξ' },
+  SOL: { color: '#9945ff', label: 'Solana', icon: '◎' },
+  BNB: { color: '#f3ba2f', label: 'BNB', icon: 'B' },
+};
+
+function detectCrypto(q = '') {
+  for (const k of Object.keys(CRYPTO_META)) if (q.startsWith(k)) return k;
+  return null;
+}
+
+function StatBox({ label, value, sub, color }) {
+  return (
+    <div className="card px-4 py-3 text-center">
+      <p className="label mb-1">{label}</p>
+      <p className="mono text-base font-semibold" style={{ color: color || '#e2e8f0' }}>{value}</p>
+      {sub && <p className="text-xs text-slate-600 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
 
 export default function Market() {
   const { id } = useParams();
@@ -24,216 +43,288 @@ export default function Market() {
   const [isOwner, setIsOwner] = useState(false);
   const [userBets, setUserBets] = useState({ yes: '0', no: '0' });
   const [claimed, setClaimed] = useState(false);
+  const [msg, setMsg] = useState(null);
 
-  // Owner ellenőrzés
   useEffect(() => {
     if (!address) return;
-    getOwner()
-      .then(owner => setIsOwner(owner.toLowerCase() === address.toLowerCase()))
-      .catch(console.error);
+    getOwner().then(o => setIsOwner(o.toLowerCase() === address.toLowerCase())).catch(() => {});
   }, [address]);
 
-  // Felhasználó saját tétjeinek lekérése
   useEffect(() => {
     if (!address || !id || !market) return;
-    getUserBets(id, address)
-      .then(setUserBets)
-      .catch(console.error);
+    getUserBets(id, address).then(setUserBets).catch(() => {});
   }, [id, address, market]);
 
-  if (!market) return <Spinner />;
+  if (!market) return (
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <Spinner />
+    </div>
+  );
+
+  const crypto = detectCrypto(market.question);
+  const meta = crypto ? CRYPTO_META[crypto] : null;
+  const color = meta?.color || '#6366f1';
 
   const isEnded = Date.now() / 1000 > market.endTime;
   const isResolved = market.resolved;
-
-  // Van-e nyertes tét?
-  const hasYesBet = parseFloat(userBets.yes) > 0;
-  const hasNoBet = parseFloat(userBets.no) > 0;
-  const hasBet = hasYesBet || hasNoBet;
-
-  // Nyerhet-e a felhasználó?
+  const hasYes = parseFloat(userBets.yes) > 0;
+  const hasNo = parseFloat(userBets.no) > 0;
+  const hasBet = hasYes || hasNo;
   const canClaim = isResolved && !claimed && (
-    (market.winningOutcome && hasYesBet) ||
-    (!market.winningOutcome && hasNoBet)
+    (market.winningOutcome && hasYes) || (!market.winningOutcome && hasNo)
   );
+
+  const total = parseFloat(market.totalYesAmount) + parseFloat(market.totalNoAmount);
+  const yesP = total > 0 ? (parseFloat(market.totalYesAmount) / total * 100) : 50;
+  const priceMatch = market.question.match(/([\d,]+\.?\d{0,2}) USD/);
+  const displayPrice = priceMatch ? priceMatch[1] : null;
+
+  const showMsg = (text, type = 'info') => {
+    setMsg({ text, type });
+    setTimeout(() => setMsg(null), 4000);
+  };
 
   const handleBet = async () => {
     try {
       await bet(id, outcome, amount);
-      alert('Fogadás sikeres!');
+      showMsg('Fogadás sikeres!', 'success');
     } catch (e) {
-      alert('Hiba: ' + e.message);
+      showMsg(e.message.includes('user rejected') ? 'Tranzakció elutasítva.' : 'Hiba: ' + e.message, 'error');
     }
   };
 
   const handleClaim = async () => {
     try {
       await claim(id);
-      alert('Nyeremény kivéve!');
       setClaimed(true);
+      showMsg('Nyeremény sikeresen kivéve!', 'success');
     } catch (e) {
-      if (e.message.includes('Already claimed')) {
-        alert('Már kivetted a nyereményt.');
-        setClaimed(true);
-      } else {
-        alert('Hiba: ' + e.message);
-      }
+      if (e.message.includes('Already claimed')) { setClaimed(true); showMsg('Már korábban kivetted.', 'info'); }
+      else showMsg('Hiba: ' + e.message, 'error');
     }
   };
 
-  const handleResolve = async (winOut) => {
+  const handleResolve = async (w) => {
     try {
-      await resolve(id, winOut);
-      alert('Piac feloldva!');
+      await resolve(id, w);
+      showMsg(`Piac feloldva: ${w ? '↑ FEL' : '↓ LE'}`, 'success');
     } catch (e) {
-      alert('Hiba: ' + e.message);
+      showMsg('Hiba: ' + e.message, 'error');
     }
   };
-
-  // Kérdés megjelenítése
-  const priceMatch = market.question.match(/[\d]{4,6}\.?\d{0,2}/);
-  const displayPrice = priceMatch ? priceMatch[0] : null;
 
   return (
-    <div className="max-w-xl mx-auto">
+    <div className="container mx-auto px-4 py-6 max-w-5xl">
 
-      {/* BTC grafikon – csak BTC piacoknál */}
-      {isBTCMarket(market.question) && <BTCChart />}
+      {/* Visszagomb */}
+      <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 mb-4 transition-colors">
+        ← Vissza a piacokhoz
+      </Link>
 
-      <GlassCard>
-        {/* Cím */}
-        <h2 className="text-xl font-bold mb-1 text-white">
-          {isBTCMarket(market.question) && displayPrice
-            ? <>BTC árfolyam: <span className="text-brand-400">{displayPrice} USD</span></>
-            : market.question
-          }
-        </h2>
-        <p className="text-sm text-gray-400 mb-4">
-          Lejárat: {new Date(market.endTime * 1000).toLocaleString()}
-        </p>
-
-        {/* Tét összesítők */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <div className="bg-surface-800/60 rounded-xl p-3 text-center">
-            <p className="text-xs text-gray-400 uppercase tracking-wider">FEL tét</p>
-            <p className="text-lg font-semibold text-green-400">{market.totalYesAmount} ETH</p>
-            {hasYesBet && <p className="text-xs text-green-300">Saját: {userBets.yes} ETH</p>}
-          </div>
-          <div className="bg-surface-800/60 rounded-xl p-3 text-center">
-            <p className="text-xs text-gray-400 uppercase tracking-wider">LE tét</p>
-            <p className="text-lg font-semibold text-red-400">{market.totalNoAmount} ETH</p>
-            {hasNoBet && <p className="text-xs text-red-300">Saját: {userBets.no} ETH</p>}
-          </div>
-        </div>
-
-        {/* Eredmény sáv */}
-        {isResolved && (
-          <div className={`text-center py-2 rounded-lg mb-4 font-bold text-lg ${
-            market.winningOutcome ? 'bg-green-900/40 text-green-300' : 'bg-red-900/40 text-red-300'
-          }`}>
-            Eredmény: {market.winningOutcome ? '↑ FEL' : '↓ LE'}
+      {/* Cím sor */}
+      <div className="flex items-start gap-3 mb-5">
+        {meta && (
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold shrink-0 mt-0.5"
+            style={{ background: color + '20', color }}>
+            {meta.icon}
           </div>
         )}
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <h1 className="text-xl font-semibold text-white">
+              {displayPrice
+                ? <>{crypto} <span className="mono" style={{ color }}>${displayPrice}</span></>
+                : market.question
+              }
+            </h1>
+            {isResolved && (
+              <span className={market.winningOutcome ? 'tag-up' : 'tag-down'} style={{ fontSize: 13 }}>
+                {market.winningOutcome ? '↑ FEL nyert' : '↓ LE nyert'}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-500">
+            Piac #{id} · Lejárat: {new Date(market.endTime * 1000).toLocaleString('hu-HU')}
+            {meta && ` · ${meta.label}`}
+          </p>
+        </div>
+      </div>
 
-        {/* Fogadási panel – csak ha aktív és be van jelentkezve */}
+      {/* Grafikon */}
+      {crypto && <CryptoChart symbol={crypto} />}
+
+      {/* Stat sor */}
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        <StatBox label="↑ FEL tét" value={`${market.totalYesAmount} ETH`} color="#4ade80"
+          sub={hasYes ? `Saját: ${userBets.yes} ETH` : null} />
+        <StatBox label="↓ LE tét" value={`${market.totalNoAmount} ETH`} color="#f87171"
+          sub={hasNo ? `Saját: ${userBets.no} ETH` : null} />
+        <StatBox label="Össz volumen" value={`${total.toFixed(4)} ETH`} color="#94a3b8" />
+      </div>
+
+      {/* Arány sáv */}
+      <div className="card px-4 py-3 mb-4">
+        <div className="flex justify-between text-xs text-slate-400 mb-2">
+          <span>↑ FEL {yesP.toFixed(1)}%</span>
+          <span>↓ LE {(100 - yesP).toFixed(1)}%</span>
+        </div>
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: '#1e293b' }}>
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${yesP}%` }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="h-full rounded-full"
+            style={{ background: `linear-gradient(90deg, #22c55e, ${color})` }}
+          />
+        </div>
+      </div>
+
+      {/* Fogadási panel */}
+      <div className="card p-5 mb-4">
+
+        {/* Üzenet sáv */}
+        {msg && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+            className="mb-4 px-4 py-2.5 rounded-lg text-sm font-medium"
+            style={{
+              background: msg.type === 'success' ? 'rgba(34,197,94,0.12)'
+                : msg.type === 'error' ? 'rgba(239,68,68,0.12)'
+                : 'rgba(148,163,184,0.1)',
+              color: msg.type === 'success' ? '#4ade80'
+                : msg.type === 'error' ? '#f87171' : '#94a3b8',
+              border: `1px solid ${msg.type === 'success' ? 'rgba(34,197,94,0.2)' : msg.type === 'error' ? 'rgba(239,68,68,0.2)' : 'rgba(148,163,184,0.1)'}`,
+            }}
+          >
+            {msg.text}
+          </motion.div>
+        )}
+
         {!isResolved && !isEnded && address && (
-          <div className="space-y-3">
-            <div className="flex gap-3">
-              <button
-                onClick={() => setOutcome(true)}
-                className={`flex-1 py-2 rounded-lg font-bold text-sm transition ${
-                  outcome ? 'bg-green-600 text-white shadow-glow' : 'bg-surface-700 text-gray-400'
-                }`}
+          <>
+            <p className="label mb-3">Fogadás leadása</p>
+            <div className="flex gap-2 mb-3">
+              <button onClick={() => setOutcome(true)}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-150"
+                style={{
+                  background: outcome ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${outcome ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.07)'}`,
+                  color: outcome ? '#4ade80' : '#475569',
+                }}
               >
                 ↑ FEL
               </button>
-              <button
-                onClick={() => setOutcome(false)}
-                className={`flex-1 py-2 rounded-lg font-bold text-sm transition ${
-                  !outcome ? 'bg-red-600 text-white' : 'bg-surface-700 text-gray-400'
-                }`}
+              <button onClick={() => setOutcome(false)}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-150"
+                style={{
+                  background: !outcome ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${!outcome ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.07)'}`,
+                  color: !outcome ? '#f87171' : '#475569',
+                }}
               >
                 ↓ LE
               </button>
             </div>
-            <input
-              type="number"
-              step="0.01"
-              min="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full bg-surface-800 border border-surface-600 rounded-lg py-2 px-3 text-white text-sm"
-              placeholder="ETH összeg (pl. 0.01)"
-            />
-            <GradientButton onClick={handleBet} disabled={betLoading} className="w-full">
-              {betLoading ? 'Tranzakció...' : 'Fogadás'}
-            </GradientButton>
+
+            <div className="relative mb-3">
+              <input type="number" step="0.01" min="0.01" value={amount}
+                onChange={e => setAmount(e.target.value)}
+                className="w-full mono text-sm rounded-xl py-3 px-4 pr-14 text-white transition-colors"
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  outline: 'none',
+                }}
+                onFocus={e => e.target.style.borderColor = color + '66'}
+                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-medium">ETH</span>
+            </div>
+
+            <button onClick={handleBet} disabled={betLoading}
+              className="w-full py-3 rounded-xl text-sm font-semibold transition-all duration-150 disabled:opacity-40"
+              style={{
+                background: outcome ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+                border: `1px solid ${outcome ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                color: outcome ? '#4ade80' : '#f87171',
+              }}
+            >
+              {betLoading ? 'Tranzakció...' : `Fogadás ${outcome ? '↑ FEL' : '↓ LE'} – ${amount} ETH`}
+            </button>
+          </>
+        )}
+
+        {!address && (
+          <div className="text-center py-4">
+            <p className="text-sm text-slate-400 mb-3">Csatlakoztasd a tárcádat a fogadáshoz</p>
           </div>
         )}
 
-        {/* Nyeremény kivétele – CSAK ha valóban nyert */}
-        {canClaim && (
-          <GradientButton onClick={handleClaim} disabled={claimLoading} className="w-full mt-4">
-            {claimLoading ? 'Kivétel...' : '🏆 Nyeremény kivétele'}
-          </GradientButton>
+        {isEnded && !isResolved && (
+          <div className="text-center py-4">
+            <p className="text-xs text-yellow-500 bg-yellow-900/20 px-4 py-2 rounded-lg inline-block">
+              A piac lejárt – az oracle feloldja
+            </p>
+          </div>
         )}
 
-        {/* Sikeres kivétel jelzése */}
+        {isResolved && canClaim && (
+          <button onClick={handleClaim} disabled={claimLoading}
+            className="w-full py-3 rounded-xl text-sm font-semibold transition-all duration-150 disabled:opacity-40"
+            style={{
+              background: 'rgba(99,102,241,0.15)',
+              border: '1px solid rgba(99,102,241,0.3)',
+              color: '#a5b4fc',
+            }}
+          >
+            {claimLoading ? 'Folyamatban...' : '🏆 Nyeremény kivétele'}
+          </button>
+        )}
+
         {claimed && (
-          <p className="text-green-400 text-sm text-center mt-4">✓ Nyeremény sikeresen kivéve!</p>
+          <p className="text-center text-sm text-green-400 py-2">✓ Nyeremény sikeresen kivéve</p>
         )}
 
-        {/* Nem fogadott a nyertes oldalra */}
         {isResolved && hasBet && !canClaim && !claimed && (
-          <p className="text-gray-400 text-sm text-center mt-4">
+          <p className="text-center text-xs text-slate-500 py-2">
             Nem a nyertes oldalra fogadtál.
           </p>
         )}
 
-        {/* Nem fogadott erre a piacra */}
         {isResolved && !hasBet && (
-          <p className="text-gray-400 text-sm text-center mt-4">
+          <p className="text-center text-xs text-slate-500 py-2">
             Nem vettél részt ezen a piacon.
           </p>
         )}
+      </div>
 
-        {/* Állapotüzenetek */}
-        {!address && (
-          <p className="text-yellow-400 text-sm text-center mt-4">
-            Csatlakoztasd a tárcádat a fogadáshoz.
-          </p>
-        )}
-        {isEnded && !isResolved && (
-          <p className="text-yellow-400 text-sm text-center mt-4">
-            A piac lejárt – feloldásra vár.
-          </p>
-        )}
-
-        {/* Owner feloldás panel – csak ha lejárt és nem oldott */}
-        {isOwner && !isResolved && isEnded && (
-          <div className="mt-6 pt-4 border-t border-gray-700">
-            <h3 className="text-xs font-semibold mb-3 uppercase tracking-wider text-gray-400">
-              Kézi feloldás (owner)
-            </h3>
-            <div className="flex gap-3">
-              <button
-                onClick={() => handleResolve(true)}
-                disabled={resolveLoading}
-                className="flex-1 bg-green-700 hover:bg-green-600 text-white py-2 rounded-lg text-sm font-medium transition"
-              >
-                ↑ FEL nyert
-              </button>
-              <button
-                onClick={() => handleResolve(false)}
-                disabled={resolveLoading}
-                className="flex-1 bg-red-700 hover:bg-red-600 text-white py-2 rounded-lg text-sm font-medium transition"
-              >
-                ↓ LE nyert
-              </button>
-            </div>
+      {/* Owner feloldás */}
+      {isOwner && !isResolved && isEnded && (
+        <div className="card p-4">
+          <p className="label mb-3">Kézi feloldás (owner)</p>
+          <div className="flex gap-3">
+            <button onClick={() => handleResolve(true)} disabled={resolveLoading}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              style={{
+                background: 'rgba(34,197,94,0.1)',
+                border: '1px solid rgba(34,197,94,0.25)',
+                color: '#4ade80',
+              }}
+            >
+              ↑ FEL nyert
+            </button>
+            <button onClick={() => handleResolve(false)} disabled={resolveLoading}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              style={{
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.25)',
+                color: '#f87171',
+              }}
+            >
+              ↓ LE nyert
+            </button>
           </div>
-        )}
-      </GlassCard>
+        </div>
+      )}
     </div>
   );
 }

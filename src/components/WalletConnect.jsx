@@ -9,37 +9,32 @@ export default function WalletConnect() {
       {({ account, chain, openConnectModal, mounted }) => {
         const ready = mounted;
         const connected = ready && account && chain;
-
         return (
-          <div {...(!ready && { 'aria-hidden': true })} className="flex items-center">
-            {(() => {
-              if (!connected) {
-                return (
-                  <button onClick={openConnectModal} type="button"
-                    className="bg-gradient-to-r from-brand-500 to-brand-700 hover:from-brand-600 hover:to-brand-800 text-white font-semibold py-1.5 px-3 md:py-2 md:px-5 rounded-full transition-all duration-300 shadow-glow hover:shadow-glow-lg text-xs md:text-sm"
-                  >
-                    Csatlakozás
-                  </button>
-                );
-              }
-              return (
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 bg-surface-800/50 backdrop-blur-md rounded-full px-4 py-2 border border-white/10">
-                    <div className="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_#4ade80]"></div>
-                    <span className="text-sm text-gray-200 font-medium">
-                      {account.displayName}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => disconnect()}
-                    className="text-xs text-red-400 hover:text-red-300 transition-colors duration-200"
-                    title="Kijelentkezés"
-                  >
-                    Kilépés
-                  </button>
+          <div>
+            {!connected ? (
+              <button onClick={openConnectModal}
+                className="text-xs font-semibold px-4 py-2 rounded-lg transition-all duration-200"
+                style={{
+                  background: 'rgba(99,102,241,0.15)',
+                  border: '1px solid rgba(99,102,241,0.4)',
+                  color: '#a5b4fc',
+                }}
+              >
+                Csatlakozás
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                  <span className="mono text-xs text-slate-300">{account.displayName}</span>
                 </div>
-              );
-            })()}
+                <button onClick={() => disconnect()}
+                  className="text-xs text-slate-500 hover:text-slate-300 transition-colors px-1">
+                  ✕
+                </button>
+              </div>
+            )}
           </div>
         );
       }}

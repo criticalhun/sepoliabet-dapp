@@ -1,10 +1,8 @@
-export default function Spinner() {
+export default function Spinner({ size = 'md' }) {
+  const s = { sm: 'w-4 h-4', md: 'w-8 h-8', lg: 'w-12 h-12' }[size];
   return (
-    <div className="flex justify-center items-center py-20">
-      <div className="relative w-12 h-12">
-        <div className="absolute inset-0 rounded-full border-2 border-brand-500/20"></div>
-        <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-brand-500 animate-spin"></div>
-      </div>
+    <div className="flex items-center justify-center py-16">
+      <div className={`${s} border-2 border-slate-700 border-t-indigo-500 rounded-full animate-spin`} />
     </div>
   );
 }
