@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useMarkets } from '../hooks/useMarket';
 import { Link } from 'react-router-dom';
 import { useAccount } from 'wagmi';
@@ -21,225 +21,269 @@ function detectCrypto(q = '') {
   return null;
 }
 
-function TimeLeft({ endTime }) {
-  const [left, setLeft] = useState('');
+function useNow() {
+  const [now, setNow] = useState(Math.floor(Date.now() / 1000));
   useEffect(() => {
-    const update = () => {
-      const s = endTime - Math.floor(Date.now() / 1000);
-      if (s <= 0) { setLeft('Lejárt'); return; }
-      if (s < 3600) setLeft(`${Math.floor(s/60)}p ${s%60}s`);
-      else setLeft(`${Math.floor(s/3600)}ó ${Math.floor((s%3600)/60)}p`);
-    };
-    update();
-    const id = setInterval(update, 1000);
+    const id = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
     return () => clearInterval(id);
-  }, [endTime]);
-  return <span className="mono text-xs">{left}</span>;
+  }, []);
+  return now;
 }
 
-function MarketCard({ market, index }) {
+function TimeLeft({ endTime, now }) {
+  const left = Math.max(0, endTime - now);
+  if (left === 0) return <span className="text-yellow-500 text-xs">Lejárt</span>;
+  const h = Math.floor(left / 3600);
+  const m = Math.floor((left % 3600) / 60);
+  const s = left % 60;
+  const urgent = left < 300; // 5 perc alatt piros
+  return (
+    <span className="mono text-xs font-medium" style={{ color: urgent ? '#f87171' : '#64748b' }}>
+      {h > 0 ? `${h}ó ${String(m).padStart(2,'0')}p` : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
+    </span>
+  );
+}
+
+function MarketCard({ market, index, now }) {
   const crypto = detectCrypto(market.question);
   const meta = crypto ? CRYPTO_META[crypto] : null;
+  const color = meta?.color || '#475569';
   const total = parseFloat(market.totalYesAmount) + parseFloat(market.totalNoAmount);
-  const yesP = total > 0 ? (parseFloat(market.totalYesAmount) / total * 100) : 50;
+  const yesP = total > 0 ? parseFloat(market.totalYesAmount) / total * 100 : 50;
   const priceMatch = market.question.match(/([\d,]+\.?\d{0,2}) USD/);
   const price = priceMatch ? priceMatch[1] : null;
   const isResolved = market.resolved;
-  const isEnded = Date.now() / 1000 > market.endTime;
+  const isEnded = now > market.endTime;
+  const isUrgent = !isResolved && !isEnded && (market.endTime - now) < 300;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, delay: index * 0.035 }}
+      transition={{ duration: 0.22, delay: index * 0.03 }}
       whileHover={{ y: -3 }}
-      className="card transition-all duration-200 overflow-hidden group"
-      style={{
-        borderLeft: `3px solid ${meta?.color || '#334155'}`,
-        cursor: 'pointer',
-      }}
+      className="card overflow-hidden group cursor-pointer"
+      style={{ borderLeft: `3px solid ${color}` }}
     >
       <Link to={`/market/${market.id}`} className="block p-4">
-
         {/* Fejléc */}
         <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {meta && (
               <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold shrink-0"
-                style={{ background: meta.color + '20', color: meta.color }}>
+                style={{ background: color + '18', color }}>
                 {meta.icon}
               </div>
             )}
-            <div>
-              <p className="label">{crypto || 'Egyéb'} piac #{market.id}</p>
-              {price && (
-                <p className="text-white font-semibold text-sm mono">
-                  ${price}
-                </p>
-              )}
-              {!price && (
-                <p className="text-slate-300 text-sm leading-snug line-clamp-2">
-                  {market.question}
-                </p>
-              )}
+            <div className="min-w-0">
+              <p className="label">{crypto || 'Piac'} #{market.id}</p>
+              {price
+                ? <p className="mono text-white text-sm font-semibold">${price}</p>
+                : <p className="text-slate-300 text-sm truncate">{market.question}</p>
+              }
             </div>
           </div>
 
-          {isResolved ? (
-            <span className={market.winningOutcome ? 'tag-up' : 'tag-down'}>
-              {market.winningOutcome ? '↑ FEL' : '↓ LE'}
-            </span>
-          ) : isEnded ? (
-            <span className="text-xs text-yellow-500 bg-yellow-900/20 px-2 py-0.5 rounded">
-              Lejárt
-            </span>
-          ) : (
-            <span className="text-xs text-slate-500">
-              <TimeLeft endTime={market.endTime} />
-            </span>
-          )}
+          <div className="shrink-0 ml-2 text-right">
+            {isResolved ? (
+              <span className={market.winningOutcome ? 'tag-up' : 'tag-down'}>
+                {market.winningOutcome ? '↑' : '↓'}
+              </span>
+            ) : (
+              <TimeLeft endTime={market.endTime} now={now} />
+            )}
+          </div>
         </div>
 
-        {/* Pool + sáv */}
+        {/* Pool + ratio */}
         <div className="space-y-2">
-          <div className="flex justify-between text-xs text-slate-500">
-            <span>Pool: <span className="text-slate-300 mono">{total.toFixed(4)} ETH</span></span>
-            <span className="flex gap-3">
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-slate-600 mono">{total.toFixed(4)} ETH pool</span>
+            <div className="flex items-center gap-2 text-xs">
               <span style={{ color: '#4ade80' }}>↑ {yesP.toFixed(0)}%</span>
-              <span style={{ color: '#f87171' }}>↓ {(100 - yesP).toFixed(0)}%</span>
-            </span>
+              <span style={{ color: '#f87171' }}>↓ {(100-yesP).toFixed(0)}%</span>
+            </div>
           </div>
 
           <div className="h-1 rounded-full overflow-hidden" style={{ background: '#1e293b' }}>
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${yesP}%` }}
-              transition={{ duration: 0.6, delay: index * 0.035 + 0.2 }}
+              transition={{ duration: 0.6, delay: index * 0.03 + 0.15 }}
               className="h-full rounded-full"
               style={{
                 background: isResolved
                   ? (market.winningOutcome ? '#22c55e' : '#ef4444')
-                  : `linear-gradient(90deg, #22c55e, ${meta?.color || '#6366f1'})`,
+                  : `linear-gradient(90deg, #22c55e, ${color})`,
               }}
             />
           </div>
         </div>
+
+        {/* Sürgős jelzés */}
+        {isUrgent && (
+          <div className="mt-2 flex items-center gap-1.5 text-xs" style={{ color: '#f87171' }}>
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+            Hamarosan lejár
+          </div>
+        )}
       </Link>
     </motion.div>
   );
 }
 
 const CRYPTOS = ['Mind', 'BTC', 'ETH', 'SOL', 'BNB'];
+const SORT_OPTIONS = [
+  { key: 'newest',  label: 'Legújabb'  },
+  { key: 'ending',  label: 'Lejáró'    },
+  { key: 'volume',  label: 'Volumen'   },
+];
 const TABS = [
-  { key: 'active', label: 'Aktív' },
-  { key: 'results', label: 'Eredmények' },
-  { key: 'mine', label: 'Saját' },
+  { key: 'active',   label: 'Aktív'       },
+  { key: 'results',  label: 'Eredmények'  },
+  { key: 'mine',     label: 'Saját'       },
 ];
 
 export default function Home() {
   const { markets, loading } = useMarkets();
   const { address } = useAccount();
-  const [crypto, setCrypto] = useState('Mind');
-  const [tab, setTab] = useState('active');
+  const now = useNow();
+  const [cryptoFilter, setCryptoFilter] = useState('Mind');
+  const [tab, setTab]   = useState('active');
+  const [sort, setSort] = useState('ending');
   const [myMarkets, setMyMarkets] = useState([]);
 
   useEffect(() => {
     if (!address || !markets.length) { setMyMarkets([]); return; }
-    const check = async () => {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, BettingMarketABI, provider);
-      const res = [];
+    (async () => {
+      const provider  = new ethers.BrowserProvider(window.ethereum);
+      const contract  = new ethers.Contract(CONTRACT_ADDRESS, BettingMarketABI, provider);
+      const result = [];
       for (const m of markets) {
         const [y, n] = await Promise.all([
           contract.getUserBet(m.id, address, true),
           contract.getUserBet(m.id, address, false),
         ]);
-        if (y > 0n || n > 0n) res.push(m);
+        if (y > 0n || n > 0n) result.push(m);
       }
-      setMyMarkets(res);
-    };
-    check();
+      setMyMarkets(result);
+    })();
   }, [markets, address]);
 
-  const byCrypto = (list) => crypto === 'Mind' ? list
-    : list.filter(m => detectCrypto(m.question) === crypto);
+  const filtered = useMemo(() => {
+    const base = {
+      active:  markets.filter(m => !m.resolved),
+      results: markets.filter(m =>  m.resolved),
+      mine:    myMarkets,
+    }[tab] || [];
 
-  const lists = {
-    active: byCrypto(markets.filter(m => !m.resolved)),
-    results: byCrypto(markets.filter(m => m.resolved)),
-    mine: byCrypto(myMarkets),
+    const byCrypto = cryptoFilter === 'Mind' ? base
+      : base.filter(m => detectCrypto(m.question) === cryptoFilter);
+
+    return [...byCrypto].sort((a, b) => {
+      if (sort === 'newest') return b.id - a.id;
+      if (sort === 'ending') return a.endTime - b.endTime;
+      if (sort === 'volume') {
+        const va = parseFloat(a.totalYesAmount) + parseFloat(a.totalNoAmount);
+        const vb = parseFloat(b.totalYesAmount) + parseFloat(b.totalNoAmount);
+        return vb - va;
+      }
+      return 0;
+    });
+  }, [markets, myMarkets, tab, cryptoFilter, sort]);
+
+  const counts = {
+    active:  markets.filter(m => !m.resolved).length,
+    results: markets.filter(m =>  m.resolved).length,
+    mine:    myMarkets.length,
   };
-  const display = lists[tab] || [];
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">
 
       {/* Hero */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-white mb-1">
-          Kripto előrejelzési piacok
-        </h1>
+        <h1 className="text-2xl font-semibold text-white mb-1">Kripto előrejelzési piacok</h1>
         <p className="text-sm text-slate-500">
-          Valós idejű BTC · ETH · SOL · BNB árfolyam piacok Sepolia testneten
+          BTC · ETH · SOL · BNB · Valós idejű · 2% platform díj
         </p>
       </div>
 
       <StatsPanel />
 
-      {/* Kripto + Tab filter */}
+      {/* Filter sor */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+
         {/* Kripto filter */}
-        <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="flex items-center gap-1 p-1 rounded-lg overflow-x-auto"
+          style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.06)' }}>
           {CRYPTOS.map(c => {
             const meta = CRYPTO_META[c];
-            const active = crypto === c;
+            const active = cryptoFilter === c;
             return (
-              <button key={c} onClick={() => setCrypto(c)}
-                className="px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150"
+              <button key={c} onClick={() => setCryptoFilter(c)}
+                className="px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-120 shrink-0"
                 style={{
                   background: active ? (meta?.color + '22' || 'rgba(99,102,241,0.15)') : 'transparent',
                   color: active ? (meta?.color || '#a5b4fc') : '#475569',
                   border: active ? `1px solid ${meta?.color || '#6366f1'}44` : '1px solid transparent',
-                }}
-              >
+                }}>
                 {c}
               </button>
             );
           })}
         </div>
 
-        {/* Tab filter */}
-        <div className="flex items-center gap-1">
-          {TABS.filter(t => t.key !== 'mine' || address).map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)}
-              className="px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150"
-              style={{
-                background: tab === t.key ? 'rgba(255,255,255,0.07)' : 'transparent',
-                color: tab === t.key ? '#e2e8f0' : '#475569',
-                border: '1px solid transparent',
-              }}
-            >
-              {t.label}
-              <span className="ml-1.5 text-slate-600">
-                {lists[t.key]?.length ?? 0}
-              </span>
-            </button>
-          ))}
+        {/* Tab + Sort */}
+        <div className="flex items-center gap-2">
+          {/* Tabs */}
+          <div className="flex items-center gap-0.5 p-0.5 rounded-lg"
+            style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.06)' }}>
+            {TABS.filter(t => t.key !== 'mine' || address).map(t => (
+              <button key={t.key} onClick={() => setTab(t.key)}
+                className="px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-120"
+                style={{
+                  background: tab === t.key ? 'rgba(255,255,255,0.08)' : 'transparent',
+                  color: tab === t.key ? '#e2e8f0' : '#475569',
+                }}>
+                {t.label}
+                <span className="ml-1 text-slate-600">{counts[t.key] ?? 0}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Sort */}
+          <select value={sort} onChange={e => setSort(e.target.value)}
+            className="text-xs rounded-lg px-2 py-1.5 mono"
+            style={{
+              background: '#0f172a',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: '#94a3b8',
+              outline: 'none',
+            }}>
+            {SORT_OPTIONS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+          </select>
         </div>
       </div>
 
-      {/* Lista */}
-      {loading ? <Spinner /> : display.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-600">
-          <div className="text-4xl mb-3">◎</div>
+      {/* Piac grid */}
+      {loading ? <Spinner /> : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 text-slate-600">
+          <div className="text-5xl mb-3 opacity-30">◎</div>
           <p className="text-sm">Nincs megjeleníthető piac</p>
+          {cryptoFilter !== 'Mind' && (
+            <button onClick={() => setCryptoFilter('Mind')}
+              className="mt-3 text-xs text-indigo-400 hover:text-indigo-300">
+              Összes megjelenítése →
+            </button>
+          )}
         </div>
       ) : (
         <AnimatePresence mode="wait">
-          <div key={tab + crypto}
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {display.map((m, i) => (
-              <MarketCard key={m.id} market={m} index={i} />
+          <div key={tab + cryptoFilter + sort}
+            className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {filtered.map((m, i) => (
+              <MarketCard key={m.id} market={m} index={i} now={now} />
             ))}
           </div>
         </AnimatePresence>
