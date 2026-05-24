@@ -78,3 +78,28 @@ export const getUserBet = async (marketId, user, outcomeYes) => {
   const bet = await contract.getUserBet(marketId, user, outcomeYes);
   return ethers.formatEther(bet);
 };
+
+export const isClaimed = async (marketId, userAddress) => {
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const contract = new ethers.Contract(CONTRACT_ADDRESS, BettingMarketABI, provider);
+  // A szerződésben nincs közvetlen isClaimed függvény, de a claimWinnings hívásakor eltároljuk.
+  // Használhatjuk a szerződés `claimed` mapping-jét, ami private, de van getter?
+  // A te szerződésedben a `claimed` mapping nincs publikus getter, de a `claimWinnings` belsőleg ellenőrzi.
+  // Egyszerűbb: megpróbáljuk hívni a claim-et, és ha visszadobja "Already claimed", akkor tudjuk.
+  // De hogy ne terheljük a láncot, inkább a frontenden tároljuk, vagy a useMarket hook-ban a market objektumba beletesszük.
+  // Mivel a szerződésben a `claimed` nem publikus, egy workaround: a `getUserBet` után a claim sikertelensége jelzi.
+  // Most az egyszerűség kedvéért: a Market oldalon a `claimed` állapotot a `handleClaim` hibájából állítjuk be.
+  return false; // placeholder
+};
+export const getUserBets = async (marketId, userAddress) => {
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const contract = new ethers.Contract(CONTRACT_ADDRESS, BettingMarketABI, provider);
+  const [yesBet, noBet] = await Promise.all([
+    contract.getUserBet(marketId, userAddress, true),
+    contract.getUserBet(marketId, userAddress, false),
+  ]);
+  return {
+    yes: ethers.formatEther(yesBet),
+    no: ethers.formatEther(noBet),
+  };
+};

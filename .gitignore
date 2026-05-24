@@ -25,3 +25,4 @@ dist-ssr
 .env
 artifacts/
 cache/
+.vercel

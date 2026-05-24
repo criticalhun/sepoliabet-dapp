@@ -6,6 +6,14 @@ export default function BetCard({ market, index }) {
   const yesPercent = totalPool > 0 ? (parseFloat(market.totalYesAmount) / totalPool * 100).toFixed(0) : 50;
   const noPercent = totalPool > 0 ? (parseFloat(market.totalNoAmount) / totalPool * 100).toFixed(0) : 50;
   const endDate = new Date(market.endTime * 1000);
+  const isResolved = market.resolved;
+  const winningOutcome = market.winningOutcome;
+
+  // Ha bot formátumú, kiemeljük az árat
+  const priceMatch = market.question.match(/BTC árfolyam:\s*([\d.]+)\s*USD/);
+  const shortTitle = priceMatch
+    ? `BTC ${priceMatch[1]} USD → ${endDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`
+    : market.question;
 
   return (
     <motion.div
@@ -16,19 +24,27 @@ export default function BetCard({ market, index }) {
       className="glass-card p-5 border border-transparent hover:border-brand-500/30 transition-all duration-300"
     >
       <Link to={`/market/${market.id}`} className="block">
-        <h3 className="font-semibold text-base mb-3 text-white leading-snug">{market.question}</h3>
+        <h3 className="font-semibold text-base mb-3 text-white leading-snug">{shortTitle}</h3>
         <div className="flex justify-between items-center text-xs text-gray-400 mb-4">
           <span className="bg-surface-800/80 rounded-full px-2 py-1">{totalPool.toFixed(4)} ETH</span>
-          <span>{endDate.toLocaleDateString()} {endDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+          <span>{endDate.toLocaleDateString()} {endDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
         </div>
-        <div className="flex gap-2">
-          <span className="flex-1 text-center bg-green-900/20 text-green-400 py-1 rounded-lg text-xs font-medium border border-green-800/30">
-            IGEN {yesPercent}%
-          </span>
-          <span className="flex-1 text-center bg-red-900/20 text-red-400 py-1 rounded-lg text-xs font-medium border border-red-800/30">
-            NEM {noPercent}%
-          </span>
-        </div>
+        {!isResolved ? (
+          <div className="flex gap-2">
+            <span className="flex-1 text-center bg-green-900/20 text-green-400 py-1 rounded-lg text-xs font-medium border border-green-800/30">
+              FEL {yesPercent}%
+            </span>
+            <span className="flex-1 text-center bg-red-900/20 text-red-400 py-1 rounded-lg text-xs font-medium border border-red-800/30">
+              LE {noPercent}%
+            </span>
+          </div>
+        ) : (
+          <div className={`px-2 py-1 rounded text-xs font-bold ${
+            winningOutcome ? 'bg-green-800 text-green-200' : 'bg-red-800 text-red-200'
+          }`}>
+            Eredmény: {winningOutcome ? 'FEL' : 'LE'}
+          </div>
+        )}
       </Link>
     </motion.div>
   );
