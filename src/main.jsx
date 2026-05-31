@@ -5,6 +5,7 @@ import './i18n';
 import './styles/index.css';
 import App from './App';
 import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
 import '@rainbow-me/rainbowkit/styles.css';
 import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
@@ -22,15 +23,17 @@ const queryClient = new QueryClient();
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ThemeProvider>
-      <WagmiProvider config={config}>
-        <QueryClientProvider client={queryClient}>
-          <RainbowKitProvider>
-            <BrowserRouter>
-              <App />
-            </BrowserRouter>
-          </RainbowKitProvider>
-        </QueryClientProvider>
-      </WagmiProvider>
+      <ToastProvider>
+        <WagmiProvider config={config}>
+          <QueryClientProvider client={queryClient}>
+            <RainbowKitProvider>
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+            </RainbowKitProvider>
+          </QueryClientProvider>
+        </WagmiProvider>
+      </ToastProvider>
     </ThemeProvider>
   </React.StrictMode>
 );

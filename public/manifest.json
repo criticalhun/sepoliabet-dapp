@@ -1,0 +1,12 @@
+{
+  "name": "SepoliaBet",
+  "short_name": "SepoliaBet",
+  "description": "Decentralized prediction markets on Sepolia",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#6366f1",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
