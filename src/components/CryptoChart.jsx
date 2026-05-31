@@ -14,7 +14,7 @@ const BINANCE_SYMBOLS = {
   BTC: 'BTCUSDT', ETH: 'ETHUSDT', SOL: 'SOLUSDT', BNB: 'BNBUSDT',
 };
 
-export default function CryptoChart({ symbol = 'BTC' }) {
+export default function CryptoChart({ symbol = 'BTC', height = 300 }) {
   const chartRef = useRef(null);
   const containerRef = useRef(null);
   const candleSeriesRef = useRef(null);
@@ -26,7 +26,7 @@ export default function CryptoChart({ symbol = 'BTC' }) {
   const color = CRYPTO_COLORS[symbol] || '#818cf8';
   const binanceSymbol = BINANCE_SYMBOLS[symbol] || 'BTCUSDT';
 
-  // Chart létrehozása
+  // Chart létrehozása – height prop alapján
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -58,7 +58,7 @@ export default function CryptoChart({ symbol = 'BTC' }) {
         fixRightEdge: true,
       },
       width: container.clientWidth,
-      height: 320,
+      height: height,           // ← prop alapján, nem hardcoded 320
     });
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
@@ -93,9 +93,9 @@ export default function CryptoChart({ symbol = 'BTC' }) {
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, []);
+  }, [height]);   // height változáskor újraépíti
 
-  // Adatok betöltése időtáv / kripto változáskor
+  // Adatok betöltése – 60 mp-enként (30 helyett)
   useEffect(() => {
     const interval = BINANCE_INTERVALS[tf] || '1h';
     const limit = tf === '1n' ? 90 : 60;
@@ -149,7 +149,7 @@ export default function CryptoChart({ symbol = 'BTC' }) {
     };
 
     load();
-    const id = setInterval(load, 30000);
+    const id = setInterval(load, 60000);   // ← 30000 → 60000 ms
     return () => { cancelled = true; clearInterval(id); };
   }, [tf, binanceSymbol, color]);
 
@@ -158,51 +158,49 @@ export default function CryptoChart({ symbol = 'BTC' }) {
     : p.toFixed(4);
 
   return (
-    <div className="mb-4 rounded-2xl border border-surface-700 overflow-hidden bg-surface-950/80 backdrop-blur-sm">
+    <div className="rounded-2xl border border-surface-700 overflow-hidden bg-surface-950/80 backdrop-blur-sm">
 
-      {/* Fejléc – ár + statisztika */}
-      <div className="px-4 pt-4 pb-3 border-b border-surface-700">
+      {/* Fejléc */}
+      <div className="px-4 pt-3 pb-2 border-b border-surface-700">
         {stats ? (
-          <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <div className="flex items-baseline gap-2 mb-1">
-                <span className="text-2xl font-bold text-white">
+                <span className="text-xl font-bold text-white font-mono">
                   ${fmtPrice(stats.price)}
                 </span>
-                <span className={`text-sm font-semibold px-2 py-0.5 rounded-full ${
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                   stats.change >= 0
                     ? 'bg-green-900/40 text-green-400'
                     : 'bg-red-900/40 text-red-400'
                 }`}>
                   {stats.change >= 0 ? '+' : ''}{stats.change.toFixed(2)}%
                 </span>
-                <span className="text-xs text-gray-500">24ó</span>
               </div>
-              <div className="flex gap-4 text-xs text-gray-400">
-                <span>Min <span className="text-gray-200">${fmtPrice(stats.low)}</span></span>
-                <span>Max <span className="text-gray-200">${fmtPrice(stats.high)}</span></span>
-                <span>Vol <span className="text-gray-200">{stats.vol.toLocaleString('hu-HU', { maximumFractionDigits: 0 })} {symbol}</span></span>
+              <div className="flex gap-3 text-xs text-gray-500">
+                <span>Min <span className="text-gray-300">${fmtPrice(stats.low)}</span></span>
+                <span>Max <span className="text-gray-300">${fmtPrice(stats.high)}</span></span>
               </div>
             </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ backgroundColor: color }} />
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: color }} />
               <span className="text-xs text-gray-400 font-medium">{symbol}/USDT</span>
             </div>
           </div>
         ) : (
-          <div className="h-10 flex items-center">
-            <div className="w-32 h-6 bg-surface-700 rounded animate-pulse" />
+          <div className="h-8 flex items-center">
+            <div className="w-28 h-5 bg-surface-700 rounded animate-pulse" />
           </div>
         )}
       </div>
 
       {/* Időtáv-választó */}
-      <div className="flex items-center gap-1 px-4 py-2 border-b border-surface-700">
+      <div className="flex items-center gap-1 px-3 py-1.5 border-b border-surface-700">
         {Object.keys(BINANCE_INTERVALS).map(label => (
           <button
             key={label}
             onClick={() => setTf(label)}
-            className={`px-3 py-1 rounded-md text-xs font-semibold transition-all duration-150 ${
+            className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all duration-150 ${
               tf === label
                 ? 'text-white'
                 : 'text-gray-500 hover:text-gray-300'
@@ -213,14 +211,12 @@ export default function CryptoChart({ symbol = 'BTC' }) {
           </button>
         ))}
         {loading && (
-          <span className="ml-auto text-xs text-gray-600 animate-pulse">frissítés...</span>
+          <span className="ml-auto text-xs text-gray-600 animate-pulse">...</span>
         )}
       </div>
 
-      {/* Gyertyás grafikon */}
-      <div className="relative">
-        <div ref={containerRef} />
-      </div>
+      {/* Grafikon */}
+      <div ref={containerRef} />
     </div>
   );
 }

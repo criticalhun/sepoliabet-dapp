@@ -2,7 +2,7 @@ const hre = require("hardhat");
 const axios = require("axios");
 
 const CONTRACT_ADDRESS = "0xEB5CE903C786aC64c3Db673944fABB45f341b4Cb";
-const INTERVALS_MINUTES = [5, 15, 30, 45, 60];
+const INTERVALS_MINUTES = [10, 15, 30, 45, 60];
 const CREATION_INTERVAL_MS = 5 * 60 * 1000;      // 5 percenként újraindítja az összes időtávot
 const RESOLUTION_CHECK_MS = 30 * 1000;            // fél percenként ellenőrzi a lejártakat
 
