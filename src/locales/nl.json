@@ -1,29 +1,89 @@
 {
-  "nav": { "markets": "Markten" },
+  "nav": {
+    "markets":     "Markten",
+    "leaderboard": "Ranglijst",
+    "profile":     "Profiel"
+  },
   "home": {
-    "title_active": "Actieve Markten", "title_results": "Resultaten", "title_mybets": "Mijn Weddenschappen",
-    "sub_active": "Ontdek voorspellingsmarkten en gebruik je kennis.",
-    "sub_results": "Resultaten van eerdere markten en behaalde winsten.",
-    "sub_mybets": "Markten waarop je hebt gewed.",
-    "tab_active": "Actief", "tab_results": "Resultaten", "tab_mybets": "Mijn weddenschappen",
-    "no_active": "Nog geen actieve markten.", "no_resolved": "Nog geen gesloten markten.",
-    "no_mybets": "Je hebt nog niet gewed.", "loading": "Markten laden...",
-    "pool": "Pool", "result": "Resultaat", "reward_pool": "Beloningspool",
-    "up": "OMHOOG", "down": "OMLAAG",
-    "sort_newest": "Nieuwste", "sort_ending": "Binnenkort", "sort_volume": "Meest volume"
+    "title_active":  "Actieve Markten",
+    "title_results": "Resultaten",
+    "title_mybets":  "Mijn Weddenschappen",
+    "sub_active":    "Ontdek voorspellingsmarkten en gebruik je kennis.",
+    "sub_results":   "Resultaten van eerdere markten en behaalde winsten.",
+    "sub_mybets":    "Markten waarop je hebt gewed.",
+    "tab_active":    "Actief",
+    "tab_results":   "Resultaten",
+    "tab_mybets":    "Mijn weddenschappen",
+    "no_active":     "Nog geen actieve markten.",
+    "no_resolved":   "Nog geen gesloten markten.",
+    "no_mybets":     "Je hebt nog niet gewed.",
+    "loading":       "Markten laden...",
+    "pool":          "Pool",
+    "result":        "Resultaat",
+    "reward_pool":   "Beloningspool",
+    "up":            "OMHOOG",
+    "down":          "OMLAAG",
+    "sort_newest":   "Nieuwste",
+    "sort_ending":   "Binnenkort afgelopen",
+    "sort_volume":   "Meest volume",
+    "hero_sub":      "Gedecentraliseerde voorspellingsmarkten voor cryptoprijzen. Sepolia Testnetwerk."
+  },
+  "stats": {
+    "volume": "Totaal volume",
+    "active": "Actieve markten",
+    "total":  "Totaal markten",
+    "tvl":    "Vergrendeld"
   },
   "market": {
-    "base_price": "Beginprijs", "higher_at": "Hoger om",
-    "up_stake": "OMHOOG inzet", "down_stake": "OMLAAG inzet", "result": "Resultaat",
-    "up": "📈 OMHOOG", "down": "📉 OMLAAG",
-    "bet": "Weddenschap", "processing": "Verwerken...",
-    "claim": "💰 Winst opeisen", "claiming": "Opeisen...", "claimed": "✓ Winst opgeëist!",
-    "no_win": "Geen winnende weddenschap.", "connect": "Verbind je wallet.",
-    "expired": "Markt verlopen, wacht op oplossing.",
-    "resolve": "Oplossen (eigenaar)", "up_won": "OMHOOG gewonnen", "down_won": "OMLAAG gewonnen",
-    "chart_hide": "▲ Verbergen", "chart_show": "▼ Grafiek", "expires": "Verloopt"
+    "base_price":  "Beginprijs",
+    "higher_at":   "Hoger om",
+    "up_stake":    "OMHOOG inzet",
+    "down_stake":  "OMLAAG inzet",
+    "result":      "Resultaat",
+    "up":          "📈 OMHOOG",
+    "down":        "📉 OMLAAG",
+    "bet":         "Weddenschap plaatsen",
+    "processing":  "Verwerken...",
+    "claim":       "💰 Winst opeisen",
+    "claiming":    "Opeisen...",
+    "claimed":     "✓ Winst opgeëist!",
+    "no_win":      "Geen winnende weddenschap op deze markt.",
+    "connect":     "Verbind je wallet om te wedden.",
+    "expired":     "Markt verlopen, wacht op oplossing.",
+    "resolve":     "Markt oplossen (eigenaar)",
+    "up_won":      "OMHOOG gewonnen",
+    "down_won":    "OMLAAG gewonnen",
+    "chart_hide":  "▲ Verbergen",
+    "chart_show":  "▼ Grafiek",
+    "expires":     "Verloopt"
   },
-  "wallet": { "connect": "Verbinden", "disconnect": "Ontkoppelen" },
-  "theme": { "dark": "Donker", "light": "Licht" },
-  "footer": { "text": "SepoliaBet DApp — Sepolia testnetwerk · Alleen educatief" }
+  "wallet": {
+    "connect":    "Verbinden",
+    "disconnect": "Ontkoppelen"
+  },
+  "theme": {
+    "dark":  "Donker",
+    "light": "Licht"
+  },
+  "footer": {
+    "text": "SepoliaBet DApp — Sepolia testnetwerk · Alleen voor educatieve doeleinden"
+  },
+  "leaderboard": {
+    "title":       "Ranglijst",
+    "subtitle":    "Top traders gerangschikt op totale geclaimde winsten",
+    "empty":       "Nog geen winsten geclaimd.",
+    "col_address": "Adres",
+    "col_bets":    "Weddenschappen",
+    "col_won":     "Gewonnen"
+  },
+  "profile": {
+    "not_connected":  "Verbind je wallet",
+    "connect_prompt": "Verbind je wallet om je profiel te bekijken.",
+    "stat_bets":      "Weddenschappen",
+    "stat_winrate":   "Winstpercentage",
+    "stat_wagered":   "Ingezet",
+    "history":        "Wedgeschiedenis",
+    "no_bets":        "Nog geen weddenschappen geplaatst.",
+    "browse_markets": "Markten verkennen"
+  }
 }

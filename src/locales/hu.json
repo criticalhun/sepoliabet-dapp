@@ -1,29 +1,89 @@
 {
-  "nav": { "markets": "Piacok" },
+  "nav": {
+    "markets":     "Piacok",
+    "leaderboard": "Rangsor",
+    "profile":     "Profil"
+  },
   "home": {
-    "title_active": "Aktív Piacok", "title_results": "Eredmények", "title_mybets": "Saját Fogadásaim",
-    "sub_active": "Fedezd fel a predikciós piacokat és használd a tudásod.",
-    "sub_results": "Múltbeli piacok eredményei és nyereményei.",
-    "sub_mybets": "Piacok, ahol fogadtál.",
-    "tab_active": "Aktív", "tab_results": "Eredmények", "tab_mybets": "Saját fogadásaim",
-    "no_active": "Még nincs aktív piac.", "no_resolved": "Még nincs lezárt piac.",
-    "no_mybets": "Még nem tettél fogadást.", "loading": "Piacok betöltése...",
-    "pool": "Alap", "result": "Eredmény", "reward_pool": "Nyereményalap",
-    "up": "FEL", "down": "LE",
-    "sort_newest": "Legújabb", "sort_ending": "Hamarosan lejár", "sort_volume": "Legtöbb tét"
+    "title_active":  "Aktív Piacok",
+    "title_results": "Eredmények",
+    "title_mybets":  "Saját Fogadásaim",
+    "sub_active":    "Fedezd fel a predikciós piacokat és használd a tudásod.",
+    "sub_results":   "Múltbeli piacok eredményei és elért nyeremények.",
+    "sub_mybets":    "Piacok, ahol fogadtál.",
+    "tab_active":    "Aktív",
+    "tab_results":   "Eredmények",
+    "tab_mybets":    "Saját fogadásaim",
+    "no_active":     "Még nincs aktív piac.",
+    "no_resolved":   "Még nincs lezárt piac.",
+    "no_mybets":     "Még nem tettél fogadást.",
+    "loading":       "Piacok betöltése...",
+    "pool":          "Alap",
+    "result":        "Eredmény",
+    "reward_pool":   "Nyereményalap",
+    "up":            "FEL",
+    "down":          "LE",
+    "sort_newest":   "Legújabb",
+    "sort_ending":   "Hamarosan lejár",
+    "sort_volume":   "Legtöbb tét",
+    "hero_sub":      "Decentralizált predikciós piacok kriptoárfolyamokra. Sepolia Teszthálózat."
+  },
+  "stats": {
+    "volume": "Teljes forgalom",
+    "active": "Aktív piacok",
+    "total":  "Összes piac",
+    "tvl":    "Zárolva"
   },
   "market": {
-    "base_price": "Kiindulóár", "higher_at": "Magasabb ekkor",
-    "up_stake": "FEL tét", "down_stake": "LE tét", "result": "Eredmény",
-    "up": "📈 FEL", "down": "📉 LE",
-    "bet": "Fogadás", "processing": "Folyamatban...",
-    "claim": "💰 Nyeremény kivétele", "claiming": "Kivétel...", "claimed": "✓ Nyeremény kivéve!",
-    "no_win": "Nem volt nyerő fogadásod ezen a piacon.", "connect": "Csatlakoztasd a tárcádat.",
-    "expired": "A piac lejárt, feloldásra vár.",
-    "resolve": "Piac feloldása (owner)", "up_won": "FEL nyert", "down_won": "LE nyert",
-    "chart_hide": "▲ Elrejt", "chart_show": "▼ Grafikon", "expires": "Lejárat"
+    "base_price":  "Kiindulóár",
+    "higher_at":   "Magasabb ekkor",
+    "up_stake":    "FEL tét",
+    "down_stake":  "LE tét",
+    "result":      "Eredmény",
+    "up":          "📈 FEL",
+    "down":        "📉 LE",
+    "bet":         "Fogadás",
+    "processing":  "Folyamatban...",
+    "claim":       "💰 Nyeremény kivétele",
+    "claiming":    "Kivétel...",
+    "claimed":     "✓ Nyeremény kivéve!",
+    "no_win":      "Nem volt nyerő fogadásod ezen a piacon.",
+    "connect":     "Csatlakoztasd a tárcádat a fogadáshoz.",
+    "expired":     "A piac lejárt, feloldásra vár.",
+    "resolve":     "Piac feloldása (owner)",
+    "up_won":      "FEL nyert",
+    "down_won":    "LE nyert",
+    "chart_hide":  "▲ Elrejt",
+    "chart_show":  "▼ Grafikon",
+    "expires":     "Lejárat"
   },
-  "wallet": { "connect": "Csatlakozás", "disconnect": "Kilépés" },
-  "theme": { "dark": "Sötét", "light": "Világos" },
-  "footer": { "text": "SepoliaBet DApp — Sepolia teszthálózat · Csak oktatási célra" }
+  "wallet": {
+    "connect":    "Csatlakozás",
+    "disconnect": "Kilépés"
+  },
+  "theme": {
+    "dark":  "Sötét",
+    "light": "Világos"
+  },
+  "footer": {
+    "text": "SepoliaBet DApp — Sepolia teszthálózat · Csak oktatási célra"
+  },
+  "leaderboard": {
+    "title":       "Rangsor",
+    "subtitle":    "Top kereskedők a kifizetett nyeremények alapján",
+    "empty":       "Még nincs kifizetett nyeremény.",
+    "col_address": "Cím",
+    "col_bets":    "Fogadások",
+    "col_won":     "Nyeremény"
+  },
+  "profile": {
+    "not_connected":  "Csatlakoztasd a tárcádat",
+    "connect_prompt": "A profil megtekintéséhez wallet kapcsolat szükséges.",
+    "stat_bets":      "Fogadások",
+    "stat_winrate":   "Nyerési arány",
+    "stat_wagered":   "Feltett összeg",
+    "history":        "Fogadási előzmények",
+    "no_bets":        "Még nem tettél fogadást.",
+    "browse_markets": "Piacok böngészése"
+  }
 }
