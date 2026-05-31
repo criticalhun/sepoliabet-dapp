@@ -1,0 +1,29 @@
+{
+  "nav": { "markets": "Marchés" },
+  "home": {
+    "title_active": "Marchés Actifs", "title_results": "Résultats", "title_mybets": "Mes Paris",
+    "sub_active": "Découvrez les marchés de prédiction et utilisez vos connaissances.",
+    "sub_results": "Résultats des marchés passés et gains obtenus.",
+    "sub_mybets": "Marchés sur lesquels vous avez parié.",
+    "tab_active": "Actifs", "tab_results": "Résultats", "tab_mybets": "Mes Paris",
+    "no_active": "Aucun marché actif.", "no_resolved": "Aucun marché clôturé.",
+    "no_mybets": "Vous n'avez pas encore parié.", "loading": "Chargement...",
+    "pool": "Mise", "result": "Résultat", "reward_pool": "Cagnotte",
+    "up": "HAUSSE", "down": "BAISSE",
+    "sort_newest": "Plus récent", "sort_ending": "Se termine bientôt", "sort_volume": "Plus de volume"
+  },
+  "market": {
+    "base_price": "Prix de base", "higher_at": "Plus haut à",
+    "up_stake": "Mise HAUSSE", "down_stake": "Mise BAISSE", "result": "Résultat",
+    "up": "📈 HAUSSE", "down": "📉 BAISSE",
+    "bet": "Parier", "processing": "En cours...",
+    "claim": "💰 Réclamer les gains", "claiming": "Réclamation...", "claimed": "✓ Gains réclamés !",
+    "no_win": "Aucun pari gagnant sur ce marché.", "connect": "Connectez votre wallet.",
+    "expired": "Marché expiré, en attente de résolution.",
+    "resolve": "Résoudre (propriétaire)", "up_won": "HAUSSE a gagné", "down_won": "BAISSE a gagné",
+    "chart_hide": "▲ Masquer", "chart_show": "▼ Graphique", "expires": "Expire"
+  },
+  "wallet": { "connect": "Connecter", "disconnect": "Déconnecter" },
+  "theme": { "dark": "Sombre", "light": "Clair" },
+  "footer": { "text": "SepoliaBet DApp — Réseau de test Sepolia · À des fins éducatives" }
+}

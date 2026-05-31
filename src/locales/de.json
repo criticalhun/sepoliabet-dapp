@@ -1,0 +1,29 @@
+{
+  "nav": { "markets": "Märkte" },
+  "home": {
+    "title_active": "Aktive Märkte", "title_results": "Ergebnisse", "title_mybets": "Meine Wetten",
+    "sub_active": "Entdecke Prognosemärkte und nutze dein Wissen.",
+    "sub_results": "Vergangene Marktergebnisse und verdiente Gewinne.",
+    "sub_mybets": "Märkte, auf die du gewettet hast.",
+    "tab_active": "Aktiv", "tab_results": "Ergebnisse", "tab_mybets": "Meine Wetten",
+    "no_active": "Noch keine aktiven Märkte.", "no_resolved": "Noch keine geschlossenen Märkte.",
+    "no_mybets": "Du hast noch keine Wetten platziert.", "loading": "Märkte werden geladen...",
+    "pool": "Pool", "result": "Ergebnis", "reward_pool": "Gewinnpool",
+    "up": "RAUF", "down": "RUNTER",
+    "sort_newest": "Neueste", "sort_ending": "Bald endend", "sort_volume": "Meistes Volumen"
+  },
+  "market": {
+    "base_price": "Ausgangspreis", "higher_at": "Höher um",
+    "up_stake": "RAUF-Einsatz", "down_stake": "RUNTER-Einsatz", "result": "Ergebnis",
+    "up": "📈 RAUF", "down": "📉 RUNTER",
+    "bet": "Wette platzieren", "processing": "Verarbeitung...",
+    "claim": "💰 Gewinn auszahlen", "claiming": "Auszahlung...", "claimed": "✓ Gewinn ausgezahlt!",
+    "no_win": "Keine Gewinnwette auf diesem Markt.", "connect": "Verbinde dein Wallet.",
+    "expired": "Markt abgelaufen, wartet auf Auflösung.",
+    "resolve": "Markt auflösen (Eigentümer)", "up_won": "RAUF gewonnen", "down_won": "RUNTER gewonnen",
+    "chart_hide": "▲ Ausblenden", "chart_show": "▼ Diagramm", "expires": "Läuft ab"
+  },
+  "wallet": { "connect": "Verbinden", "disconnect": "Trennen" },
+  "theme": { "dark": "Dunkel", "light": "Hell" },
+  "footer": { "text": "SepoliaBet DApp — Sepolia Testnetz · Nur zu Bildungszwecken" }
+}

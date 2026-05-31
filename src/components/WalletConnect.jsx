@@ -1,37 +1,32 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useDisconnect } from 'wagmi';
+import { useTranslation } from 'react-i18next';
 
 export default function WalletConnect() {
   const { disconnect } = useDisconnect();
+  const { t } = useTranslation();
 
   return (
     <ConnectButton.Custom>
       {({ account, chain, openConnectModal, mounted }) => {
-        const ready = mounted;
-        const connected = ready && account && chain;
+        const connected = mounted && account && chain;
         return (
-          <div>
+          <div {...(!mounted && { 'aria-hidden': true })}>
             {!connected ? (
-              <button onClick={openConnectModal}
-                className="text-xs font-semibold px-4 py-2 rounded-lg transition-all duration-200"
-                style={{
-                  background: 'rgba(99,102,241,0.15)',
-                  border: '1px solid rgba(99,102,241,0.4)',
-                  color: '#a5b4fc',
-                }}
-              >
-                Csatlakozás
+              <button onClick={openConnectModal} type="button"
+                className="btn-primary py-1.5 px-4 text-xs font-semibold rounded-full">
+                {t('wallet.connect')}
               </button>
             ) : (
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                  <span className="mono text-xs text-slate-300">{account.displayName}</span>
+                <div className="flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium"
+                  style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', color: 'var(--text-2)' }}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
+                  {account.displayName}
                 </div>
                 <button onClick={() => disconnect()}
-                  className="text-xs text-slate-500 hover:text-slate-300 transition-colors px-1">
-                  ✕
+                  className="text-xs text-rose-400 hover:text-rose-300 transition-colors font-medium">
+                  {t('wallet.disconnect')}
                 </button>
               </div>
             )}

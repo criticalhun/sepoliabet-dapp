@@ -1,0 +1,29 @@
+{
+  "nav": { "markets": "Markets" },
+  "home": {
+    "title_active": "Active Markets", "title_results": "Results", "title_mybets": "My Bets",
+    "sub_active": "Discover prediction markets and use your knowledge.",
+    "sub_results": "Past market outcomes and earned rewards.",
+    "sub_mybets": "Markets where you placed a bet.",
+    "tab_active": "Active", "tab_results": "Results", "tab_mybets": "My Bets",
+    "no_active": "No active markets yet.", "no_resolved": "No resolved markets yet.",
+    "no_mybets": "You haven't placed any bets yet.", "loading": "Loading markets...",
+    "pool": "Pool", "result": "Result", "reward_pool": "Reward pool",
+    "up": "UP", "down": "DOWN",
+    "sort_newest": "Newest", "sort_ending": "Ending Soon", "sort_volume": "Most Volume"
+  },
+  "market": {
+    "base_price": "Base Price", "higher_at": "Higher at",
+    "up_stake": "UP Stake", "down_stake": "DOWN Stake", "result": "Result",
+    "up": "📈 UP", "down": "📉 DOWN",
+    "bet": "Place Bet", "processing": "Processing...",
+    "claim": "💰 Claim Winnings", "claiming": "Claiming...", "claimed": "✓ Winnings claimed!",
+    "no_win": "No winning bet on this market.", "connect": "Connect wallet to bet.",
+    "expired": "Market expired, awaiting resolution.",
+    "resolve": "Resolve Market (Owner)", "up_won": "UP won", "down_won": "DOWN won",
+    "chart_hide": "▲ Hide", "chart_show": "▼ Chart", "expires": "Expires"
+  },
+  "wallet": { "connect": "Connect", "disconnect": "Disconnect" },
+  "theme": { "dark": "Dark", "light": "Light" },
+  "footer": { "text": "SepoliaBet DApp — Sepolia Testnet · Educational purposes only" }
+}

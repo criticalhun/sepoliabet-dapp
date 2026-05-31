@@ -1,11 +1,11 @@
+import { useTranslation } from 'react-i18next';
+
 export default function Footer() {
+  const { t } = useTranslation();
   return (
-    <footer style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
-      className="py-4 mt-8">
-      <div className="container mx-auto px-4 flex items-center justify-between">
-        <span className="text-xs text-slate-600">SepoliaBet © 2026 – Testnet only</span>
-        <span className="text-xs text-slate-700 mono">Sepolia ETH</span>
-      </div>
+    <footer className="relative z-10 py-5 text-center text-xs font-medium"
+      style={{ borderTop: '1px solid var(--card-border)', color: 'var(--text-3)' }}>
+      {t('footer.text')}
     </footer>
   );
 }

@@ -1,0 +1,29 @@
+{
+  "nav": { "markets": "Markten" },
+  "home": {
+    "title_active": "Actieve Markten", "title_results": "Resultaten", "title_mybets": "Mijn Weddenschappen",
+    "sub_active": "Ontdek voorspellingsmarkten en gebruik je kennis.",
+    "sub_results": "Resultaten van eerdere markten en behaalde winsten.",
+    "sub_mybets": "Markten waarop je hebt gewed.",
+    "tab_active": "Actief", "tab_results": "Resultaten", "tab_mybets": "Mijn weddenschappen",
+    "no_active": "Nog geen actieve markten.", "no_resolved": "Nog geen gesloten markten.",
+    "no_mybets": "Je hebt nog niet gewed.", "loading": "Markten laden...",
+    "pool": "Pool", "result": "Resultaat", "reward_pool": "Beloningspool",
+    "up": "OMHOOG", "down": "OMLAAG",
+    "sort_newest": "Nieuwste", "sort_ending": "Binnenkort", "sort_volume": "Meest volume"
+  },
+  "market": {
+    "base_price": "Beginprijs", "higher_at": "Hoger om",
+    "up_stake": "OMHOOG inzet", "down_stake": "OMLAAG inzet", "result": "Resultaat",
+    "up": "📈 OMHOOG", "down": "📉 OMLAAG",
+    "bet": "Weddenschap", "processing": "Verwerken...",
+    "claim": "💰 Winst opeisen", "claiming": "Opeisen...", "claimed": "✓ Winst opgeëist!",
+    "no_win": "Geen winnende weddenschap.", "connect": "Verbind je wallet.",
+    "expired": "Markt verlopen, wacht op oplossing.",
+    "resolve": "Oplossen (eigenaar)", "up_won": "OMHOOG gewonnen", "down_won": "OMLAAG gewonnen",
+    "chart_hide": "▲ Verbergen", "chart_show": "▼ Grafiek", "expires": "Verloopt"
+  },
+  "wallet": { "connect": "Verbinden", "disconnect": "Ontkoppelen" },
+  "theme": { "dark": "Donker", "light": "Licht" },
+  "footer": { "text": "SepoliaBet DApp — Sepolia testnetwerk · Alleen educatief" }
+}
